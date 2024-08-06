@@ -31,15 +31,17 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
     const textareaRef = useRef(null);
     const transformerRef = useRef(null); // for resize 
 
-    // useEffect(()=>{
-    //     if(textareaRef.current){
-    //         textareaRef.current.value = doubleClicked.text_value
-    //         setHeight(textareaRef.current.scrollHeight)
-    //         setTranslate(-textareaRef.current.scrollHeight/2)
-    //     }
-        
-    // },[doubleClicked])
+    
+    useEffect(()=>{
+        if(textareaRef.current){
+            textareaRef.current.value = doubleClicked.text_value;                      
+        }        
+    },[doubleClicked])
 
+    // useEffect(()=>{
+    //     console.log("rect after resize ",JSON.stringify(rectanglesPos))
+        
+    // },[rectanglesPos])
 
   useEffect(() => {
     
@@ -52,7 +54,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
             if (document.activeElement.tagName === 'TEXTAREA') {
                 return; // Do nothing if the focus is on a textarea
             }
-            console.log("delete event called")
+            
         }
         
             if (selectedShape) {
@@ -126,7 +128,6 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       if (e.target === e.target.getStage()) {
             setSelectedShape(null);
         } else if (e.target) {
-
           setSelectedShape(e.target);
       }  
       if (isClicked === 'text') {
@@ -216,6 +217,68 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
 //     console.log("after transform ",shape)
 //   }
 
+function handleTransform(e){
+    console.log("handleing transform ... ");
+
+    // console.log("size of shape ",e.target);
+    const shape = e.target;
+    const { width, height, scaleX = 1, scaleY = 1 } = shape.attrs;
+
+    const newWidth = width * scaleX;
+    const newHeight = height * scaleY;
+
+    if (shape.getClassName() === "Rect") {
+        setRectanglesPos(prevRectangles =>
+            prevRectangles.map(rect =>
+                rect.id === shape.id()
+                    ? { ...rect, attrs: { ...rect.attrs, width: newWidth, height: newHeight } }
+                    : rect
+            )
+        );
+}
+}
+
+function handleResize(e) {
+
+    console.log("resize caleed");
+    // const shape = e.target;
+    // const { width, height, scaleX = 1, scaleY = 1 } = shape.attrs;
+
+    // const newWidth = width + scaleX;
+    // const newHeight = height + scaleY;
+
+    // if (shape.getClassName() === "Rect") {
+    //     setRectanglesPos(prevRectangles =>
+    //         prevRectangles.map(rect =>
+    //             rect.id === shape.id()
+    //                 ? { ...rect, attrs: { ...rect.attrs, width: newWidth, height: newHeight } }
+    //                 : rect
+    //         )
+    //     );
+    }
+    // const new_rect = e.target.getClientRect();
+    // const shapeId = e.target.id(); // Ensure you are using the shape ID to match with state
+
+    // console.log("new size ", new_rect.height, new_rect.width);
+
+    // if (e.target.getClassName() === "Rect") {
+    //     setRectanglesPos(prevRectangles =>
+    //         prevRectangles.map(rect =>
+    //             rect.id === shapeId
+    //                 ? {
+    //                     ...rect,
+    //                     attrs: {
+    //                         ...rect.attrs,
+    //                         height: new_rect.height,
+    //                         width: new_rect.width
+    //                     }
+    //                 }
+    //                 : rect
+    //         )
+    //     );
+    // }
+
+
     function handleTextDoubleClick(e){
         // if(e.target.getClassName() === 'Text'){
             
@@ -237,29 +300,23 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
         const shape = e.target.getClientRect();        
         const new_y = shape.y + (shape.height/2);
         
-        // const translate = -(30/2);
         setTranslate(-(30/2)) // setting translate to zero .....
-        console.log("rect in asasds",e.target.parent.children[1].getClientRect())
         setDoubleClicked({x: shape.x, y: new_y, width: shape.width, height: shape.height, shape_id: e.target.getId(), text_value: e.target.parent.children[1]?.attrs?.text || ""})
-        // setHeight(e.target.parent.children[1]?.getClientRect().height || 30)
         setSelectedShape(null)
-        // setDoubleClicked({width: shape.width})
-        // const rect = e.target.getClientRect() 
-        // setInputPos({ x: rect.x, y: rect.y });  
-
+        
     }
 
     function handleTextAreaHeight(e) {
         const textarea = e.target;
         
         // Temporarily set the height to auto to recalculate scrollHeight correctly
+        // console.log("text value ",doubleClicked.text_value)
+        // textarea.value = doubleClicked.text_value;
         textarea.style.height = 'auto';
         const newHeight = textarea.scrollHeight;
         
         // Apply the new height
-        textarea.style.height = `${newHeight}px`;
-    
-        console.log("New height:", newHeight);
+        textarea.style.height = `${newHeight}px`;        
     
         setHeight(newHeight);
     
@@ -278,12 +335,12 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
     }
 
     function handleTextAreaBlur(e){
-        console.log("text area value ",textareaRef.current.value)
-        if(textareaRef.current.value.trim() !== ""){
+        
+        // if(textareaRef.current.value.trim() !== ""){
             setRectanglesPos(prevRectangles =>
                 prevRectangles.map(rect => rect.id === doubleClicked.shape_id ? { ...rect, attrs: { ...rect.attrs, text: textareaRef.current.value ,textHeight: height}} : rect));
         
-        }
+        // }
         setDoubleClicked(null);
         setTranslate(-30/2)
         setHeight(30);
@@ -326,24 +383,19 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                             <Text
                                 id={"rect_text"+rect_pos.id}
                                 key={"rect_text"+rect_pos.id}                                                                                    
-                                // x={rect_pos.attrs.width/2}
-                                y={rect_pos.attrs.height/2}
-                                width={rect_pos.attrs.width}
-                                // offsetX={rect_pos.attrs.textHeight/2}
-                                offsetY= {rect_pos.attrs.textHeight/2}
+                                height={rect_pos.attrs.height}
+                                width={rect_pos.attrs.width}                                
                                 text={rect_pos.attrs.text}                       
-                                fontSize={16}
-                                fontFamily={'serif'}
+                                fontSize={16}                                
+                                fontFamily={'Courier New, Monaco'}
                                 fill='white'                                
-                                align="center"                                
+                                align="center"         
+                                verticalAlign="middle"
+                                opacity={1}                       
                                 listening = {false}
-                                visible={rect_pos.attrs.text && (!doubleClicked || doubleClicked.shape_id !== rect_pos.id)}
-                                
-                                // onDblClick={handleTextDoubleClick}
-                                                    
-                            />
-                             
-
+                                visible={(rect_pos.attrs.text || rect_pos.attrs.text==="") && (!doubleClicked || doubleClicked.shape_id !== rect_pos.id)}                                
+                                // onDblClick={handleTextDoubleClick}                                                    
+                            />                             
                         </Group>
 
                     ))}
@@ -399,7 +451,8 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                           }
                           return newBox;
                         }}
-                        // onTransformEnd={(e)=>handleResize(e)}
+                        onTransform={handleTransform}
+                        onTransformEnd={handleResize}
                       />
                     )}  
                 </Layer>
@@ -455,11 +508,12 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                     transform: `translate(0, ${parseInt(translate)}px)`,
                     // transform: `{height.translate}`,                    
                     outline: 'none',
-                    background:'white',
+                    background:'black',
                     caret:'white',
-                    color:"black",
+                    color:"white",
                     fontSize:'16px',
                     fontSize:'serif',
+                    textAlign: 'center',
                     // lineHeight: 'normal',
                     borderRadius: '8px',
 
