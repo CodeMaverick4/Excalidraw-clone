@@ -6,24 +6,23 @@ import { Stage, Layer, Rect, Text, Circle, Line ,Group,Transformer} from 'react-
 
 export default function Canvas_cmp({ isClicked, setClicked }) {    
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    
+    // state for copy and paste shape
+    const [clipboard, setClipboard] = useState(null)
+    //rectangle states
     const [rectanglesPos, setRectanglesPos] = useState([]);
     const [doubleClicked, setDoubleClicked] = useState(null); // for rect ,circle text area 
     const [height, setHeight] = useState(30);
     const [translate, setTranslate] = useState(0);
-
+    //circle states
     const [circlesPos, setCirclesPos] = useState([]);
-    // const [textsPos, setTextsPos] = useState([]);
+    
+    //text states
     const [inputPos, setInputPos] = useState(null);
     const [text_id,setTextId] = useState(null);
     const [inputValue, setInputValue] = useState('');
-    // const [inputWidth, setInputWidth] = useState(5);
     const [inputSize, setInputSize] = useState({width:5,fontsize:16});
     const [texts, setTexts] = useState([]);
     
-    const [draggingShape, setDraggingShape] = useState(null);
-    // const [draggingPos, setDraggingPos] = useState({ x: 0, y: 0 });
-
     const [selectedShape,setSelectedShape] = useState(null);
     
     const inputRef = useRef(null); // for text input
@@ -39,24 +38,79 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
     },[doubleClicked])
 
     // useEffect(()=>{
-    //     console.log("rect after resize ",JSON.stringify(rectanglesPos))
+    //     console.log("circles in useeffect ",JSON.stringify(circlesPos))
         
-    // },[rectanglesPos])
+    // },[circlesPos])
+    useEffect(()=>{
+        console.log("new rect  useeffect ",rectanglesPos)
+        
+    },[rectanglesPos])
 
   useEffect(() => {
     
       const handleKeyDown = (e) => {
-        if (e.key === 'Delete' || e.key === 'Backspace') {
+
+
+        if(e.ctrlKey && e.key === "c" && selectedShape){            
+            setClipboard(selectedShape);            
+        }
         
-        
-            // Check if the active element is a textarea
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            if (document.activeElement.tagName === 'TEXTAREA') {
-                return; // Do nothing if the focus is on a textarea
+        // pasting the copied shape 
+        if(clipboard && e.ctrlKey && e.key === "v" ){
+
+            if(clipboard.getClassName() === 'Rect'){
+                // console.log("rect it ",clipboard.id());
+                let rect_ele = rectanglesPos.find(rect=> rect.id === clipboard.id());
+                // console.log("x --- ", rect_ele.attrs.x)
+
+                const new_temp_id = nanoid();
+
+                let new_attrs = { ...rect_ele.attrs, x: rect_ele.attrs.x + 30, y: rect_ele.attrs.y + 30 };
+
+                // console.log("x --- ", rect_ele.attrs.x)
+                
+                // setClipboard(null);
+                setRectanglesPos([...rectanglesPos,{id: new_temp_id, attrs: new_attrs}])
+            }
+            else if(clipboard.getClassName() === 'Circle'){
+                // console.log("circle it ",clipboard.id());
+                let circle_ele = circlesPos.find(circle=> circle.id === clipboard.id());
+                // console.log("x --- ", circle_ele.attrs.x)
+
+                const new_temp_id = nanoid();
+
+                let new_attrs = { ...circle_ele.attrs, x: circle_ele.attrs.x + 30, y: circle_ele.attrs.y + 30 };
+
+                // console.log("x --- ", circle_ele.attrs.x)
+                
+                // setClipboard(null);
+                setCirclesPos([...circlesPos,{id: new_temp_id, attrs: new_attrs}])
+
+            }
+            else if(clipboard.getClassName() === 'Text'){
+                // console.log("text it ",clipboard.id());
+                let text_ele = texts.find(text=> text.id === clipboard.id());
+                // console.log("x --- ", text_ele.attrs.x)
+
+                const new_temp_id = nanoid();
+
+                let new_attrs = { ...text_ele.attrs, x: text_ele.attrs.x + 30, y: text_ele.attrs.y + 30 };
+
+                // console.log("x --- ", text_ele.attrs.x)
+                
+                // setClipboard(null);
+                setTexts([...texts,{id: new_temp_id, attrs: new_attrs}])
+
             }
             
         }
+
         
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+                
             if (selectedShape) {
                 if(selectedShape.getClassName() === 'Rect') {
                     const rect_id = selectedShape.getId();
@@ -79,6 +133,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                 setSelectedShape(null);
             }
         }
+        
       };
 
       window.addEventListener('keydown', handleKeyDown);
@@ -86,15 +141,14 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
       };
-     }, [selectedShape]);
+     }, [selectedShape,clipboard,rectanglesPos, circlesPos, texts]);
 
   useEffect(() => {
       if (transformerRef.current && selectedShape) {
           transformerRef.current.nodes([selectedShape]);
           transformerRef.current.getLayer().batchDraw();
-      }
-      
-      }, [selectedShape]);
+      }      
+    }, [selectedShape]);
 
   useEffect(() => {            
       const updateDimensions = () => {
@@ -110,20 +164,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       };
     }, []);
     
-    // ------------------------------------
-    const handleInputChange = (e) => {
-        const value = e.target.value;
-        setInputValue(value);
-        
-        spanRef.current.style.fontSize = `${inputSize.fontsize}px`;
-        spanRef.current.style.fontFamily = inputSize.fontfamily;
-        spanRef.current.textContent = value;
-
-        const updatedWidth = spanRef.current.offsetWidth;
-        setInputSize({ ...inputSize, width: updatedWidth });
-    };
-    // --------------------------------------
-
+// --------------------------Draw shape on screen ------------------------------------
     function handleClick(e) {      
       if (e.target === e.target.getStage()) {
             setSelectedShape(null);
@@ -141,10 +182,56 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
         } else if (isClicked === 'circle') {
             const pos = e.target.getStage().getPointerPosition();
             const tempId = nanoid();
-            setCirclesPos([...circlesPos, {id:tempId,attrs:{ x: pos.x, y: pos.y}}]);
+            setCirclesPos([...circlesPos, {id:tempId,attrs:{ x: pos.x, y: pos.y, radius:100, scaleX: 1, scaleY: 1, rotation:0, text:null}}]);
             setClicked('selector');
         }
     }
+
+//-----------------------------drag function-------------------------
+function handleDragEnd(e){
+    
+    const shape = e.target.children?.[0] || e.target;
+    const shape_name = e.target.children?.[0].getClassName() || e.target.getClassName();
+    // console.log("class name ", shape.x())
+    if(shape_name === 'Rect'){
+        
+        setRectanglesPos(rectanglesPos.map(rect =>
+             rect.id === shape.id() ? {
+                ...rect,
+                attrs:{...rect.attrs, x: shape.getClientRect().x, y: shape.getClientRect().y}
+            }
+            :rect));
+    }
+    else if(shape_name === 'Circle'){
+        setCirclesPos(circlesPos.map(circle =>
+            circle.id === shape.id() ? {
+                ...circle,
+                attrs:{...circle.attrs, x: shape.getClientRect().x, y: shape.getClientRect().y}
+            }
+            :circle));
+        }
+    else if(shape_name === 'Text'){
+        setTexts(texts.map(text =>
+            text.id === shape.id() ? {
+                ...text,
+                attrs:{...text.attrs, x: shape.getClientRect().x, y: shape.getClientRect().y}
+            }
+            :text));
+        }
+    }
+//------------------------------Text input funtions------------------------------------
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        
+        spanRef.current.style.fontSize = `${inputSize.fontsize}px`;
+        spanRef.current.style.fontFamily = inputSize.fontfamily;
+        spanRef.current.textContent = value;
+
+        const updatedWidth = spanRef.current.offsetWidth;
+        setInputSize({ ...inputSize, width: updatedWidth });
+    };    
+
 
     function handleInputBlur() {
         if (inputValue.trim() !== '') {
@@ -175,59 +262,17 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
        
     }
 
-    const handleDragStart = (e, type, index) => {
-        setDraggingShape({ type, index });
-        setDraggingPos({ x: e.target.x(), y: e.target.y() });
-    };
-
-    // const handleDragMove = (e) => {
-    //     if (draggingShape) {
-           
-    //         const newPos = { x: e.target.x(), y: e.target.y() };
-           
-    //         setDraggingPos(newPos);
-    //     }
-    // };
-
-    // const handleDragEnd = () => {
-    //     setDraggingShape(null);
-    // };
 
 
-//   function handleResize(shape){
-//     const attrs = shape.target.attrs;
-//     if(shape.target.getClassName() === 'Rect' ) {
-//       let arr = [...rectanglesPos];
-//       arr[selectedShape.index].width = attrs.width + attrs.scaleX;
-//       arr[selectedShape.index].height = attrs.height + attrs.scaleY;
-//       setRectanglesPos(arr);
-
-//     } else if (shape.target.getClassName() === 'Circle' ) {
-//         let arr = [...circlesPos];
-//         arr[selectedShape.index].radius = attrs.radius ;
-        
-//         setCirclesPos(arr);        
-//     } else if (shape.target.getClassName() === 'Text' ) { 
-//         let arr = [...texts];
-//         arr[selectedShape.index].height = attrs.height;
-//         arr[selectedShape.index].width = attrs.width;
-//         setTexts(arr);
-//     }
-//     setSelectedShape(null);
-//     console.log("after transform ",shape)
-//   }
-
+// --------------------Tranformation functions ---------------------------------------------------
 function handleTransform(e){
-    console.log("handleing transform ... ");
 
-    // console.log("size of shape ",e.target);
     const shape = e.target;
-    const { width, height, scaleX = 1, scaleY = 1 } = shape.attrs;
-
-    const newWidth = width * scaleX;
-    const newHeight = height * scaleY;
 
     if (shape.getClassName() === "Rect") {
+        const { width, height, scaleX = 1, scaleY = 1 } = shape.attrs;
+        const newWidth = width * scaleX;
+        const newHeight = height * scaleY;
         setRectanglesPos(prevRectangles =>
             prevRectangles.map(rect =>
                 rect.id === shape.id()
@@ -235,50 +280,34 @@ function handleTransform(e){
                     : rect
             )
         );
-}
-}
-
-function handleResize(e) {
-
-    console.log("resize caleed");
-    // const shape = e.target;
-    // const { width, height, scaleX = 1, scaleY = 1 } = shape.attrs;
-
-    // const newWidth = width + scaleX;
-    // const newHeight = height + scaleY;
-
-    // if (shape.getClassName() === "Rect") {
-    //     setRectanglesPos(prevRectangles =>
-    //         prevRectangles.map(rect =>
-    //             rect.id === shape.id()
-    //                 ? { ...rect, attrs: { ...rect.attrs, width: newWidth, height: newHeight } }
-    //                 : rect
-    //         )
-    //     );
     }
-    // const new_rect = e.target.getClientRect();
-    // const shapeId = e.target.id(); // Ensure you are using the shape ID to match with state
+    else if(shape.getClassName() === "Circle"){
+        console.log("circle transform ",shape);
+        const scale_x = shape.attrs.scaleX
+        const scale_y = shape.attrs.scaleY
+        const rotate = shape.attrs.rotation
+        setCirclesPos(circlesPos.map(circle =>
+             circle.id === shape.id() ? {
+                ...circle,
+            attrs: {...circle.attrs,
+                 scaleX: scale_x,
+                  scaleY: scale_y,
+                   rotation: rotate}}: circle));
+    }
+}
 
-    // console.log("new size ", new_rect.height, new_rect.width);
+function handleTransformEnd(e){
+    // console.log("e. target -- ",e.target)
+    // console.log("getclient ",e.target.getClientRect())
+}
 
-    // if (e.target.getClassName() === "Rect") {
-    //     setRectanglesPos(prevRectangles =>
-    //         prevRectangles.map(rect =>
-    //             rect.id === shapeId
-    //                 ? {
-    //                     ...rect,
-    //                     attrs: {
-    //                         ...rect.attrs,
-    //                         height: new_rect.height,
-    //                         width: new_rect.width
-    //                     }
-    //                 }
-    //                 : rect
-    //         )
-    //     );
-    // }
+// -------------------------Circle text handleing functions -------------------------------------------------------------
 
+function handleCircleDblClick(e){
+    console.log("circle double clicked ",e.target)
+}
 
+// -------------------------Rectangle text handleing functions ----------------------------------------------------------
     function handleTextDoubleClick(e){
         // if(e.target.getClassName() === 'Text'){
             
@@ -309,9 +338,6 @@ function handleResize(e) {
     function handleTextAreaHeight(e) {
         const textarea = e.target;
         
-        // Temporarily set the height to auto to recalculate scrollHeight correctly
-        // console.log("text value ",doubleClicked.text_value)
-        // textarea.value = doubleClicked.text_value;
         textarea.style.height = 'auto';
         const newHeight = textarea.scrollHeight;
         
@@ -361,6 +387,7 @@ function handleResize(e) {
                                 x={rect_pos.attrs.x}
                                 y={rect_pos.attrs.y}
                                 draggable
+                                onDragEnd={handleDragEnd}
                         >                            
                             <Rect
                                 id={rect_pos.id}
@@ -372,7 +399,7 @@ function handleResize(e) {
                                 stroke="white"
                                 fill={rect_pos.attrs.fill_color}                 
                                 cornerRadius={15}           
-                                strokeWidth={1}
+                                strokeWidth={1}                                
                                 // fill="blue"
                                 // draggable
                                 onDblClick={handleRectDblClick}
@@ -401,20 +428,48 @@ function handleResize(e) {
                     ))}
 
                     {circlesPos.map((circle_pos) => (
-                        <Circle
-                            id={circle_pos.id}
+                        <Group
                             key={circle_pos.id}
                             x={circle_pos.attrs.x}
                             y={circle_pos.attrs.y}
-                            radius={100}
+                            draggable
+                        >                
+                        <Circle
+                            id={circle_pos.id}
+                            key={circle_pos.id}
+                            // x={circle_pos.attrs.x}
+                            // y={circle_pos.attrs.y}
+                            radius={circle_pos.attrs.radius}
+                            // radius={100}
                             stroke="white"
                             fill={'black'}
                             strokeWidth={1}
-                            draggable
-                            // onDragStart={(e) => handleDragStart(e, 'circle', circle_pos.id)}
-                            // onDragMove={handleDragMove}
-                            // onDragEnd={handleDragEnd}
+                            rotation={circle_pos.attrs.rotation}
+                            scaleX= {circle_pos.attrs.scaleX}
+                            scaleY= {circle_pos.attrs.scaleY}           
+                            onDblClick={handleCircleDblClick}                 
+                           
                         />
+                        <Text
+                                id={"circle_text"+circle_pos.id}
+                                key={"circle_text"+circle_pos.id}                                                                                    
+                                // height={rect_pos.attrs.height}
+                                // width={rect_pos.attrs.width}                                
+                                // text={circle_pos.attrs.text}                       
+                                text={"hello world"}      
+                                fontSize={16}                                
+                                fontFamily={'Courier New, Monaco'}
+                                fill='white'                                
+                                align="center"         
+                                verticalAlign="middle"
+                                offsetX={50}            
+                                listening = {false}
+                                // visible={(rect_pos.attrs.text || rect_pos.attrs.text==="") && (!doubleClicked || doubleClicked.shape_id !== rect_pos.id)}                                
+                                // onDblClick={handleTextDoubleClick}                                                    
+                            />        
+
+                           
+                        </Group>
                     ))}
 
                     
@@ -437,7 +492,7 @@ function handleResize(e) {
                             visible= {text_id===textItem.id ? false : true }                       
                             // onDragStart={(e) => handleDragStart(e, 'text', textItem.id)}
                             // onDragMove={handleDragMove}
-                            // onDragEnd={handleDragEnd}                            
+                            onDragEnd={handleDragEnd}                            
                             />
                     ))}
     
@@ -446,13 +501,13 @@ function handleResize(e) {
                         ref={transformerRef}
                         boundBoxFunc={(oldBox, newBox) => {
                           // Limit resize and rotate
-                          if (newBox.width < 100 || newBox.height < 100) {
+                          if (newBox.width < 10 || newBox.height < 10) {
                             return oldBox;
                           }
                           return newBox;
                         }}
                         onTransform={handleTransform}
-                        onTransformEnd={handleResize}
+                        onTransformEnd={handleTransformEnd}
                       />
                     )}  
                 </Layer>
@@ -466,8 +521,8 @@ function handleResize(e) {
                         left: `${inputPos.x}px`,
                         width: `${inputSize.width + 3}px`,
                         position: 'absolute',
-                        backgroundColor: 'white',                        
-                        color:'black',
+                        backgroundColor: 'black',                        
+                        color:'white',
                         outline: 'none',
                         boxSizing: 'border-box',
                         fontSize: `${inputSize.fontsize}px`,
