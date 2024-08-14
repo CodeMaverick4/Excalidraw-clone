@@ -6,7 +6,7 @@ export default function Tooltip_icons({icon,span_text,span_pos,isClicked,handleC
     
 
   return (
-    <span onClick={()=>handleClick()} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} className={`relative ${isClicked ? 'bg-gray-700' : 'hover:bg-gray-700'} flex items-center justify-center w-12 h-12 rounded-md`}>
+    <span onClick={()=>handleClick()} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} className={`relative ${isClicked ? 'bg-[#202938]' : 'hover:bg-[#202937]'} flex items-center justify-center w-12 h-12 rounded-md`}>
     
     {icon_with_dropdown ?     
       (
