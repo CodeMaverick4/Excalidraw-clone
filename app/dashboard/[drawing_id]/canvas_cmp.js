@@ -57,10 +57,10 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
     //     console.log("input pos updated  in useeffect ",inputPos)
         
     // },[inputPos])
-    useEffect(()=>{
-        console.log("................",rectanglesPos)
+    // useEffect(()=>{
+    //     console.log("................",lines)
         
-    },[rectanglesPos])
+    // },[lines])
 
   useEffect(() => {
     
@@ -70,24 +70,30 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
         if(e.ctrlKey && e.key === "c" && selectedShape){            
             setClipboard(selectedShape);            
         }else if(e.ctrlKey && e.key === "b"){
-            console.log("save called");
-            
+            // console.log("save called");
+            localStorage.clear();
             if (rectanglesPos.length !== 0) {
+                // localStorage.removeItem("rectangles");
                 localStorage.setItem('rectangles',JSON.stringify(rectanglesPos)) //  saving rectangles
             }
             if (circlesPos.length !== 0) {
+                // localStorage.removeItem("circle");
                 localStorage.setItem('circle',JSON.stringify(circlesPos)) // saving circle
             }
             if (lines.length !== 0) {
+                // localStorage.removeItem("line");
                 localStorage.setItem('line',JSON.stringify(lines)) // saving line
             }
             if (arrows.length !== 0) {
+                // localStorage.removeItem("arrow");
                 localStorage.setItem('arrow',JSON.stringify(arrows)) // saving arrow
             }
             if (pen.length !== 0) {
+                // localStorage.removeItem("pen");
                 localStorage.setItem('pen',JSON.stringify(pen)) // saving pen
             }
             if (texts.length !== 0) {
+                // localStorage.removeItem("text");
                 localStorage.setItem('text',JSON.stringify(texts)) // saving pen
             }
 
@@ -95,7 +101,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                 setShowAlert(true);
                 setTimeout(() => {
                     setShowAlert(false);
-                }, 3000);
+                }, 1000);
             },100);
             // setShowAlert(false);
         }       
@@ -167,7 +173,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
       };
-     }, [selectedShape,clipboard,rectanglesPos, circlesPos, texts]);
+     }, [selectedShape,clipboard,rectanglesPos, circlesPos, lines, arrows, pen, texts]);
 
   useEffect(() => {        
       if (transformerRef.current && selectedShape) {
@@ -188,7 +194,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       updateDimensions();     
 //---------------load data from local storage-------------------------------
 
-      // Load rectangles
+    //   // Load rectangles
     const savedRectangles = localStorage.getItem('rectangles');
     if (savedRectangles) {
         setRectanglesPos(JSON.parse(savedRectangles));
@@ -266,7 +272,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
             if(!isDrawing[0]){
                 const pos = e.target.getStage().getPointerPosition();
                 const tempId = nanoid();                
-                setLines([...lines,{id: tempId, attrs:{ points: [pos.x, pos.y] }}]);                
+                setLines([...lines,{id: tempId, attrs:{ points: [pos.x, pos.y]}}]);                
                 setIsDrawing([true,tempId]);
                 
             }else{                
@@ -296,38 +302,30 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
             setIsDrawing([true,tempId]);
         }
         else if (isClicked === 'eraser') {
-            console.log("handle click called ...")
+            // console.log("handle click called ...")
             setIsDrawing([true,null]);                             
         }
 
 //         
     }
 
-//-----------------------------drag function-------------------------
+//-----------------------------drag function-------------------------    
 
     function handleDragEnd(e){
-    
+        
         const shape = e.target.children?.[0] || e.target;
         
         const shape_name = e.target.children?.[0].getClassName() || e.target.getClassName();
-        if(shape_name === 'Rect'){
-            
-            // setRectanglesPos(rectanglesPos.map(rect =>
-            //     rect.id === shape.id() ? {
-            //         ...rect,
-            //         attrs:{...rect.attrs, x: shape.getClientRect().x, y: shape.getClientRect().y}
-            //     }
-            //     :rect));
-
-            // for draging attached shape
-        
-            
-            
-
-
-
+        if(shape_name === 'Rect'){            
+            setRectanglesPos(rectanglesPos.map(rect =>
+                rect.id === shape.id() ? {
+                    ...rect,
+                    attrs:{...rect.attrs, x: shape.getClientRect().x, y: shape.getClientRect().y}
+                }
+                :rect));        
         }
         else if(shape_name === 'Circle'){
+            
             setCirclesPos(circlesPos.map(circle =>
                 circle.id === shape.id() ? {
                     ...circle,
@@ -345,14 +343,54 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
             }
                     
         else if (shape_name === 'Line') {
-            
-                const newPoints = shape.points();
-                setLines(lines.map(line =>
-                    line.id === shape.id() ? { ...line, attrs: { ...line.attrs, points: newPoints } } : line
-                ));
+
+            const { x: rel_x, y: rel_y } = e.target.position();            
+            const relX = Number(rel_x);
+            const relY = Number(rel_y);
+
+            const lin = lines.find(line=> line.id === shape.id())
+            const newPoints = [
+                lin.attrs.points[0] + relX,
+                lin.attrs.points[1] + relY,
+                lin.attrs.points[2] + relX,
+                lin.attrs.points[3] + relY
+              ];
+            setLines(lines.map(line => 
+                line.id === shape.id() 
+                ?
+                {...line,attrs:{
+                    ...line.attrs, 
+                    points : newPoints
+                    }
+                }
+                :line));
+                
+                e.target.position({ x: 0, y: 0 });
             }
         else if (shape_name === 'Arrow') {
             
+            const { x: rel_x, y: rel_y } = e.target.position();            
+            const relX = Number(rel_x);
+            const relY = Number(rel_y);
+
+            const arro = arrows.find(arrow=> arrow.id === shape.id())
+            const newPoints = [
+                arro.attrs.points[0] + relX,
+                arro.attrs.points[1] + relY,
+                arro.attrs.points[2] + relX,
+                arro.attrs.points[3] + relY
+              ];
+            setArrows(arrows.map(arrow => 
+                arrow.id === shape.id() 
+                ?
+                {...arrow,attrs:{
+                    ...arrow.attrs, 
+                    points : newPoints
+                    }
+                }
+                :arrow));
+                
+                e.target.position({ x: 0, y: 0 });
     }
 }
 
@@ -360,7 +398,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
         
         const new_x = e.target.x();
         const new_y = e.target.y();
-        console.log("drag ...Arrow.. ",e.target.getClassName())
+        // console.log("drag ...Arrow.. ",e.target.getClassName())
         if(shape  === "Arrow"){
             setArrows(arrows.map(
                 arrow=> arrow.id === selectedShape.id() 
@@ -509,7 +547,7 @@ function handleTransformEnd(e){
     }
 
     function handleDblClick(e){        
-        console.log("arrow");
+        // console.log("arrow");
         const shape_name = e.target.getClassName()
         if(shape_name === 'Rect'){
             const shape = e.target.getClientRect();        
@@ -706,7 +744,7 @@ function handleTransformEnd(e){
             if (shape_name === "Rect" || shape_name === "Circle" || shape_name === "Arrow" || shape_name === "Line"){
                 
                 if(isDrawing[0] === true){                
-                    console.log("in eraser",shape_name)                
+                    // console.log("in eraser",shape_name)                
                     const shape_id = e.target.id()                    
                     eraseShape(shape_name, shape_id);
                 }
@@ -715,7 +753,7 @@ function handleTransformEnd(e){
     }
 
 const eraseShape = (shape,id)=>{
-    console.log("eraser calles",shape,id)
+    // console.log("eraser calles",shape,id)
     if(shape === 'Rect') {                
         const updatedArray = rectanglesPos.filter(rect => rect.id !== id);
         setRectanglesPos(updatedArray);
@@ -860,7 +898,9 @@ const eraseShape = (shape,id)=>{
                             shadowOffsetX={2}
                             shadowOffsetY={2}
                             fill="white"
-
+                            // dashEnabled={true}
+                            // dash={[10, 5]}
+                            
                             strokeWidth={1}
                             hitStrokeWidth={6}
                             rotation={circle_pos.attrs.rotation}
@@ -895,27 +935,25 @@ const eraseShape = (shape,id)=>{
                     {lines.map(line => 
                     <Group
                         key={line.id}
-                        id={line.id}
+                        id={line.id}                        
                         draggable                          
                         onDragEnd={handleDragEnd}  
                         onMouseEnter={!isDrawing[0] ? handleMouseEnter : ''}
                         onMouseLeave={!isDrawing[0] ? handleMouseLeave : ''}
-                    >
-                
+                    >                
                         <Line
                             id={line.id}
                             key={line.id}
-                            points={line.attrs.points}
+                            points={line.attrs.points}                                                    
                             stroke="black"
                             // shadowColor='black'
-                            //     shadowBlur={3}
-                            //     shadowOffsetX={3}
-                            //     shadowOffsetY={2}
+                            //shadowBlur={3}
+                            //shadowOffsetX={3}
+                            //shadowOffsetY={2}
                             strokeWidth={2}
-                            hitStrokeWidth={6}
-                            
+                            hitStrokeWidth={6}                            
                             lineCap="round"
-                            lineJoin="round"                                                        
+                            lineJoin="round"                                                                        
                         />
                     
                     {(selectedShape && selectedShape.id() === line.id) &&  <>

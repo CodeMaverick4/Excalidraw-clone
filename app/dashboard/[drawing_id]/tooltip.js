@@ -15,7 +15,7 @@ export default function Tooltip({isClicked,setClicked}) {
         <Tooltip_icons icon={<i className='font-bold transform rotate-45 inline-block'>|</i>} span_text={"Line"} isClicked={isClicked == "line"} handleClick={()=>setClicked("line")}/>
         <Tooltip_icons icon={<i className="fa-solid fa-pen inline-block"></i>} span_text={"Pen"} isClicked={isClicked == "pen"} handleClick={()=>setClicked("pen")}/>
         <Tooltip_icons icon={<i className="fa-solid fa-t inline-block"></i>} span_text={"Text"} isClicked={isClicked == "text"} handleClick={()=>setClicked("text")}/>            
-        <Tooltip_icons icon={<i class="fa-solid fa-eraser"></i>} span_text={"Eraser"} isClicked={isClicked == "eraser"} handleClick={()=>setClicked("eraser")}/>            
+        <Tooltip_icons icon={<i className="fa-solid fa-eraser"></i>} span_text={"Eraser"} isClicked={isClicked == "eraser"} handleClick={()=>setClicked("eraser")}/>            
     </div>
     
     {/* {isClicked === "rectangle" && (<Rect_tooltip  />) }
