@@ -264,7 +264,7 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
       };
 
 
-    }, []);
+    }, [rectanglesPos, circlesPos, lines, arrows, pen, texts]);
 
 
     
