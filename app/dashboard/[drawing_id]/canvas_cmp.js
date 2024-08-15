@@ -127,6 +127,32 @@ export default function Canvas_cmp({ isClicked, setClicked }) {
                 let new_attrs = { ...text_ele.attrs, x: text_ele.attrs.x + 30, y: text_ele.attrs.y + 30 };
                 setTexts([...texts,{id: new_temp_id, attrs: new_attrs}])
             }
+            else if(clipboard.getClassName() === 'Line'){
+                let line_ele = lines.find(line=> line.id === clipboard.id());
+                const new_temp_id = nanoid();
+                let new_attrs = { 
+                    ...line_ele.attrs, points : [
+                        line_ele.attrs.points[0] + 30, 
+                        line_ele.attrs.points[1] + 30,
+                        line_ele.attrs.points[2] + 30,
+                        line_ele.attrs.points[3] + 30
+                        ]
+                    };
+                setLines([...lines,{id: new_temp_id, attrs: new_attrs}]);
+            }
+            else if(clipboard.getClassName() === 'Arrow'){
+                let arrow_ele = arrows.find(arrow=> arrow.id === clipboard.id());
+                const new_temp_id = nanoid();
+                let new_attrs = { 
+                    ...arrow_ele.attrs, points : [
+                        arrow_ele.attrs.points[0] + 30, 
+                        arrow_ele.attrs.points[1] + 30,
+                        arrow_ele.attrs.points[2] + 30,
+                        arrow_ele.attrs.points[3] + 30
+                        ]
+                    };
+                setArrows([...arrows,{id: new_temp_id, attrs: new_attrs}])
+            }
         }
 
         if (e.key === 'Delete' || e.key === 'Backspace') {

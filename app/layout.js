@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "excalidraw"
+  title: "excalidraw clone"
 };
 
 export default function RootLayout({ children }) {

@@ -26,12 +26,7 @@ export default function Home() {
           <PrimaryButton 
           icon = {<i class="fa-solid fa-message"></i> }
           button_text = "Sign Up with Mobile OTP"/>
-          
-          
         </div>
-        
-        
-        
       </form>
     </div>
     
